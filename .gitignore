@@ -21,5 +21,15 @@ build/
 dist/
 *.spec
 
+# PyInstaller
+build/
+dist/
+*.spec
+
+# AppImage
+*.AppImage
+*.AppDir/
+appimagetool-*
+
 # User data
 *.gvdesign
