@@ -998,9 +998,16 @@ class MainWindow(QMainWindow):
             page_idx = idx_b
 
         if page_idx >= 0:
-            # Get the MERGED transform (global + per-page) so user sees current state
-            transform = self.booklet_processor.get_transform_for_page(page_idx)
+            # Get ONLY the per-page delta (NOT merged with global)
+            if page_idx in self.booklet_processor.transform_manager.page_transforms:
+                transform = self.booklet_processor.transform_manager.page_transforms[
+                    page_idx
+                ]
+            else:
+                # No per-page transform exists, show identity/zero values
+                from ..logic.page_transforms import Transform
 
+                transform = Transform()
             # Block signals and update UI
             self.page_options_widget.blockSignals(True)
 
