@@ -805,13 +805,27 @@ class MainWindow(QMainWindow):
     def open_documentation(self):
         """Open the user manual PDF from the project root docs folder."""
         try:
-            project_root = os.path.dirname(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            )
-            docs_path = os.path.join(project_root, "docs", "user_manual.pdf")
+            import sys
+
+            # Determine base path (works for both dev and PyInstaller)
+            if getattr(sys, "frozen", False):
+                # Running as PyInstaller bundle
+                base_path = sys._MEIPASS
+            else:
+                # Running as script
+                base_path = os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                )
+
+            docs_path = os.path.join(base_path, "docs", "user_manual.pdf")
 
             if os.path.exists(docs_path):
-                subprocess.Popen(["xdg-open", docs_path])
+                if sys.platform == "linux":
+                    subprocess.Popen(["xdg-open", docs_path])
+                elif sys.platform == "darwin":  # macOS
+                    subprocess.Popen(["open", docs_path])
+                elif sys.platform == "win32":  # Windows
+                    os.startfile(docs_path)
             else:
                 QMessageBox.warning(
                     self, "Documentation", f"User manual not found at:\n{docs_path}"

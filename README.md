@@ -1,6 +1,6 @@
 # PDFBooklet
 
-A PyQt6 application for creating booklet impositions from PDF files.
+A modern Linux desktop application for creating booklet impositions from PDF files.
 
 ## Features
 - Booklet, calendar, and single-page modes

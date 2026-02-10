@@ -80,9 +80,19 @@ class AboutDialog(QDialog):
 
     def _load_license_text(self):
         """Reads the content of the LICENSE file."""
-        license_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "..", "..", "LICENSE"
-        )
+        import sys
+
+        if getattr(sys, "frozen", False):
+            # Running as PyInstaller bundle
+            base_path = sys._MEIPASS
+        else:
+            # Running as script
+            base_path = os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            )
+
+        license_path = os.path.join(base_path, "LICENSE")
+
         try:
             with open(license_path, "r", encoding="utf-8") as f:
                 return f.read()
