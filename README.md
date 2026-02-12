@@ -1,5 +1,4 @@
 # PDFBooklet
-![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/selwynorren/PDFBooklet/latest/total)
 
 A modern Linux desktop application for creating booklet impositions from PDF files.
 
