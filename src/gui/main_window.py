@@ -40,6 +40,8 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.setWindowTitle("PDF Booklet")
 
+        self._loading_transforms = False  # ADD THIS LINE
+
         # PDF state
         self.current_pdf_path = None
         self.booklet_processor = None
@@ -352,11 +354,13 @@ class MainWindow(QMainWindow):
 
     def _on_page_transform_changed(self):
         """Apply page-specific transformations and update preview."""
-        if not self.booklet_processor or not self._is_pdf_open:
+        # CRITICAL: Don't apply if we're just loading values
+        if getattr(self, '_loading_transforms', False):
             return
 
+        if not self.booklet_processor or not self._is_pdf_open:
+            return
         domain = self.page_options_widget.get_domain()
-
         # Don't do anything if no domain is selected
         if not (
             self.page_options_widget.domain_this.isChecked()
@@ -364,18 +368,14 @@ class MainWindow(QMainWindow):
             or self.page_options_widget.domain_odd.isChecked()
         ):
             return
-
         transform_dict = self.page_options_widget.get_transformations()
-
         # Apply transforms directly to the backend (don't save to instance vars yet)
         if domain == "this":
             if self.current_selected_booklet_page < 0 or not self.current_selected_side:
                 return
-
             idx_a, idx_b = self.booklet_processor.get_original_indices_for_booklet_page(
                 self.current_selected_booklet_page
             )
-
             if self.current_selected_side in ["Left", "Top"]:
                 if idx_a >= 0:
                     self.booklet_processor.set_page_transform(
@@ -391,13 +391,10 @@ class MainWindow(QMainWindow):
                     self.booklet_processor.set_page_transform(
                         idx_a, transform_dict, domain
                     )
-
         elif domain == "even":
             self.booklet_processor.set_page_transform(0, transform_dict, "even")
-
         elif domain == "odd":
             self.booklet_processor.set_page_transform(1, transform_dict, "odd")
-
         # Update preview
         if self.preview_viewer_widget:
             new_pixmap = self.booklet_processor.render_page(
@@ -956,9 +953,9 @@ class MainWindow(QMainWindow):
         """Handle when the user clicks a page side in the preview."""
         self.current_selected_booklet_page = booklet_page
         self.current_selected_side = side
-
         if side is None:
             # Deselected - clear everything
+            self._loading_transforms = True
             self.page_options_widget.blockSignals(True)
             self.page_options_widget.domain_this.setAutoExclusive(False)
             self.page_options_widget.domain_even.setAutoExclusive(False)
@@ -969,7 +966,6 @@ class MainWindow(QMainWindow):
             self.page_options_widget.domain_this.setAutoExclusive(True)
             self.page_options_widget.domain_even.setAutoExclusive(True)
             self.page_options_widget.domain_odd.setAutoExclusive(True)
-
             self.page_options_widget.set_transformations(
                 {
                     "h_shift_mm": 0.0,
@@ -983,42 +979,31 @@ class MainWindow(QMainWindow):
                 }
             )
             self.page_options_widget.blockSignals(False)
+            self._loading_transforms = False
             self.status_message_label.setText("No selection")
             return
-
         # Page selected - load its PER-PAGE-ONLY transforms (not merged with global!)
         idx_a, idx_b = self.booklet_processor.get_original_indices_for_booklet_page(
             booklet_page
         )
-
         page_idx = -1
         if side in ["Left", "Top", "Whole"]:
             page_idx = idx_a
         elif side in ["Right", "Bottom"]:
             page_idx = idx_b
-
         if page_idx >= 0:
             # Get ONLY the per-page delta (NOT merged with global)
             if page_idx in self.booklet_processor.transform_manager.page_transforms:
-                transform = self.booklet_processor.transform_manager.page_transforms[
-                    page_idx
-                ]
+                transform = self.booklet_processor.transform_manager.page_transforms[page_idx]
             else:
-                # No per-page transform exists, show identity/zero values
                 from ..logic.page_transforms import Transform
-
                 transform = Transform()
-            # Block signals and update UI
-            self.page_options_widget.blockSignals(True)
 
-            # Set to "Manually selected page" without triggering signals
-            self.page_options_widget.domain_this.blockSignals(True)
-            self.page_options_widget.domain_even.blockSignals(True)
-            self.page_options_widget.domain_odd.blockSignals(True)
+            # CRITICAL: Set flag to prevent transform application during load
+            self._loading_transforms = True
+
+            # Set to "Manually selected page"
             self.page_options_widget.domain_this.setChecked(True)
-            self.page_options_widget.domain_this.blockSignals(False)
-            self.page_options_widget.domain_even.blockSignals(False)
-            self.page_options_widget.domain_odd.blockSignals(False)
 
             # Load ONLY the per-page transforms
             transform_dict = {
@@ -1033,7 +1018,8 @@ class MainWindow(QMainWindow):
             }
             self.page_options_widget.set_transformations(transform_dict)
 
-            self.page_options_widget.blockSignals(False)
+            # CRITICAL: Clear flag
+            self._loading_transforms = False
 
         self.status_message_label.setText(
             f"Selected page {booklet_page + 1}, side: {side}"
@@ -1046,8 +1032,8 @@ class MainWindow(QMainWindow):
 
         domain = self.page_options_widget.get_domain()
 
-        # Block signals while updating UI
-        self.page_options_widget.blockSignals(True)
+        # CRITICAL: Set flag to prevent transform application during load
+        self._loading_transforms = True
 
         if domain == "this":
             # Manually selected page mode
@@ -1066,7 +1052,11 @@ class MainWindow(QMainWindow):
                     page_idx = idx_b
 
                 if page_idx >= 0:
-                    transform = self.booklet_processor.get_transform_for_page(page_idx)
+                    if page_idx in self.booklet_processor.transform_manager.page_transforms:
+                        transform = self.booklet_processor.transform_manager.page_transforms[page_idx]
+                    else:
+                        from ..logic.page_transforms import Transform
+                        transform = Transform()
                     transform_dict = {
                         "h_shift_mm": transform.h_shift_mm,
                         "v_shift_mm": transform.v_shift_mm,
@@ -1152,4 +1142,5 @@ class MainWindow(QMainWindow):
                     }
                 )
 
-        self.page_options_widget.blockSignals(False)
+        # CRITICAL: Clear flag at the end
+        self._loading_transforms = False

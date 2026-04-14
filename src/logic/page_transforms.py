@@ -128,59 +128,60 @@ class PageTransformManager:
     def get_transform_for_page(self, page_index: int) -> Transform:
         """
         Get the final transformation for a specific page.
-        Priority (highest to lowest):
-        1. Explicit per-page override (compounds with global)
-        2. Even/odd domain rules (compounds with global)
-        3. Global transformation
+        Compounds all three layers: global + even/odd + per-page
         """
         if page_index < 0 or page_index >= self.total_pages:
             return Transform()
 
         global_t = self.global_transform
 
-        # Check for explicit per-page override FIRST (highest priority)
+        # Start with global
+        result = Transform(
+            h_shift_mm=global_t.h_shift_mm,
+            v_shift_mm=global_t.v_shift_mm,
+            scale_percent=global_t.scale_percent,
+            rotation_deg=global_t.rotation_deg,
+            h_flip=global_t.h_flip,
+            v_flip=global_t.v_flip,
+            h_scale_percent=global_t.h_scale_percent,
+            v_scale_percent=global_t.v_scale_percent,
+        )
+
+        # Add even/odd domain if applicable
+        page_number = page_index + 1
+        domain_t = None
+        if page_number % 2 == 0 and self.even_pages_transform:
+            domain_t = self.even_pages_transform
+        elif page_number % 2 == 1 and self.odd_pages_transform:
+            domain_t = self.odd_pages_transform
+
+        if domain_t:
+            result = Transform(
+                h_shift_mm=result.h_shift_mm + domain_t.h_shift_mm,
+                v_shift_mm=result.v_shift_mm + domain_t.v_shift_mm,
+                scale_percent=result.scale_percent * domain_t.scale_percent / 100,
+                rotation_deg=result.rotation_deg + domain_t.rotation_deg,
+                h_flip=result.h_flip != domain_t.h_flip,
+                v_flip=result.v_flip != domain_t.v_flip,
+                h_scale_percent=result.h_scale_percent * domain_t.h_scale_percent / 100,
+                v_scale_percent=result.v_scale_percent * domain_t.v_scale_percent / 100,
+            )
+
+        # Add per-page if applicable
         if page_index in self.page_transforms:
             page_t = self.page_transforms[page_index]
-            return Transform(
-                h_shift_mm=page_t.h_shift_mm + global_t.h_shift_mm,
-                v_shift_mm=page_t.v_shift_mm + global_t.v_shift_mm,
-                scale_percent=page_t.scale_percent * global_t.scale_percent / 100,
-                rotation_deg=page_t.rotation_deg + global_t.rotation_deg,
-                h_flip=page_t.h_flip != global_t.h_flip,  # XOR
-                v_flip=page_t.v_flip != global_t.v_flip,  # XOR
-                h_scale_percent=page_t.h_scale_percent * global_t.h_scale_percent / 100,
-                v_scale_percent=page_t.v_scale_percent * global_t.v_scale_percent / 100,
+            result = Transform(
+                h_shift_mm=result.h_shift_mm + page_t.h_shift_mm,
+                v_shift_mm=result.v_shift_mm + page_t.v_shift_mm,
+                scale_percent=result.scale_percent * page_t.scale_percent / 100,
+                rotation_deg=result.rotation_deg + page_t.rotation_deg,
+                h_flip=result.h_flip != page_t.h_flip,
+                v_flip=result.v_flip != page_t.v_flip,
+                h_scale_percent=result.h_scale_percent * page_t.h_scale_percent / 100,
+                v_scale_percent=result.v_scale_percent * page_t.v_scale_percent / 100,
             )
 
-        # Check for even/odd domain rules (medium priority)
-        page_number = page_index + 1
-        if page_number % 2 == 0 and self.even_pages_transform:
-            even_t = self.even_pages_transform
-            return Transform(
-                h_shift_mm=even_t.h_shift_mm + global_t.h_shift_mm,
-                v_shift_mm=even_t.v_shift_mm + global_t.v_shift_mm,
-                scale_percent=even_t.scale_percent * global_t.scale_percent / 100,
-                rotation_deg=even_t.rotation_deg + global_t.rotation_deg,
-                h_flip=even_t.h_flip != global_t.h_flip,
-                v_flip=even_t.v_flip != global_t.v_flip,
-                h_scale_percent=even_t.h_scale_percent * global_t.h_scale_percent / 100,
-                v_scale_percent=even_t.v_scale_percent * global_t.v_scale_percent / 100,
-            )
-        elif page_number % 2 == 1 and self.odd_pages_transform:
-            odd_t = self.odd_pages_transform
-            return Transform(
-                h_shift_mm=odd_t.h_shift_mm + global_t.h_shift_mm,
-                v_shift_mm=odd_t.v_shift_mm + global_t.v_shift_mm,
-                scale_percent=odd_t.scale_percent * global_t.scale_percent / 100,
-                rotation_deg=odd_t.rotation_deg + global_t.rotation_deg,
-                h_flip=odd_t.h_flip != global_t.h_flip,
-                v_flip=odd_t.v_flip != global_t.v_flip,
-                h_scale_percent=odd_t.h_scale_percent * global_t.h_scale_percent / 100,
-                v_scale_percent=odd_t.v_scale_percent * global_t.v_scale_percent / 100,
-            )
-
-        # No overrides - return global only
-        return global_t
+        return result
 
     def clear_page_transform(self, page_index: int):
         """Clear any explicit transform for a specific page."""
