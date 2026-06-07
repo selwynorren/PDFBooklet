@@ -31,21 +31,26 @@ class GeneralOptionsWidget(QWidget):
         self._custom_size_mm = (0.0, 0.0)
 
         # --- Imposition Type Group ---
-        self.imposition_type_group = QGroupBox("Imposition Type")
+        self.imposition_type_group = QGroupBox(self.tr("Imposition Type"))
         imposition_type_layout = QVBoxLayout(self.imposition_type_group)
 
+        # Combo items carry a stable logical value (userData) so program logic
+        # never depends on the translated display text.
         self.imposition_type_combo = QComboBox()
-        self.imposition_type_combo.addItems(["Booklet", "Calendar", "Single Page"])
+        self.imposition_type_combo.addItem(self.tr("Booklet"), "booklet")
+        self.imposition_type_combo.addItem(self.tr("Calendar"), "calendar")
+        self.imposition_type_combo.addItem(self.tr("Single Page"), "single")
         imposition_type_layout.addWidget(self.imposition_type_combo)
 
         layout.addWidget(self.imposition_type_group)
 
         # --- Page Orientation Group ---
-        self.orientation_group = QGroupBox("Page Orientation")
+        self.orientation_group = QGroupBox(self.tr("Page Orientation"))
         orientation_layout = QVBoxLayout(self.orientation_group)
 
         self.orientation_combo = QComboBox()
-        self.orientation_combo.addItems(["Portrait", "Landscape"])
+        self.orientation_combo.addItem(self.tr("Portrait"), "portrait")
+        self.orientation_combo.addItem(self.tr("Landscape"), "landscape")
         self.orientation_combo.setCurrentIndex(0)  # Default to Landscape for booklets
         orientation_layout.addWidget(self.orientation_combo)
 
@@ -54,19 +59,19 @@ class GeneralOptionsWidget(QWidget):
         layout.addWidget(self.orientation_group)
 
         # --- New Layout Group ---
-        self.layout_group = QGroupBox("Layout")
+        self.layout_group = QGroupBox(self.tr("Layout"))
         layout_group_layout = QVBoxLayout(self.layout_group)
 
         self.layout_combo = QComboBox()
         self.layout_combo.addItems(
             [
-                "Single booklet",
-                "Multiple booklets",
-                "2 pages",
-                "x pages in line",
-                "x pages in columns",
-                "x copies",
-                "user defined",
+                self.tr("Single booklet"),
+                self.tr("Multiple booklets"),
+                self.tr("2 pages"),
+                self.tr("x pages in line"),
+                self.tr("x pages in columns"),
+                self.tr("x copies"),
+                self.tr("user defined"),
             ]
         )
         layout_group_layout.addWidget(self.layout_combo)
@@ -75,24 +80,24 @@ class GeneralOptionsWidget(QWidget):
         self.layout_group.setEnabled(False)
 
         # --- New Booklet Dimensions Group ---
-        self.booklet_dimensions_group = QGroupBox("Booklet Dimensions")
+        self.booklet_dimensions_group = QGroupBox(self.tr("Booklet Dimensions"))
         booklet_dimensions_layout = QGridLayout(self.booklet_dimensions_group)
 
-        booklet_dimensions_layout.addWidget(QLabel("Rows:"), 0, 0)
+        booklet_dimensions_layout.addWidget(QLabel(self.tr("Rows:")), 0, 0)
         self.rows_input = SpinboxButtonsWidget()
         self.rows_input.setSingleStep(1)
         self.rows_input.setRange(1, 99)
         self.rows_input.setValue(1)
         booklet_dimensions_layout.addWidget(self.rows_input, 0, 1)
 
-        booklet_dimensions_layout.addWidget(QLabel("Columns:"), 1, 0)
+        booklet_dimensions_layout.addWidget(QLabel(self.tr("Columns:")), 1, 0)
         self.columns_input = SpinboxButtonsWidget()
         self.columns_input.setSingleStep(1)
         self.columns_input.setRange(1, 99)
         self.columns_input.setValue(2)
         booklet_dimensions_layout.addWidget(self.columns_input, 1, 1)
 
-        booklet_dimensions_layout.addWidget(QLabel("Leafs:"), 2, 0)
+        booklet_dimensions_layout.addWidget(QLabel(self.tr("Leafs:")), 2, 0)
         self.leafs_input = SpinboxButtonsWidget()
         self.leafs_input.setSingleStep(1)
         self.leafs_input.setRange(0, 99)
@@ -102,20 +107,33 @@ class GeneralOptionsWidget(QWidget):
         self.booklet_dimensions_group.setEnabled(False)
 
         # --- Output Size Group ---
-        self.output_size_group = QGroupBox("Output Size")
+        self.output_size_group = QGroupBox(self.tr("Output Size"))
+        # The selected size is the FINISHED (folded) page, not the printed sheet.
+        # e.g. an A4 booklet folds two A5 pages onto an A3 sheet.
+        self.output_size_group.setToolTip(
+            self.tr(
+                "This is the size of each finished, folded page — not the sheet you "
+                "print on. A booklet folds two of these onto one sheet, so an A4 "
+                "booklet prints on A3."
+            )
+        )
         output_size_layout = QGridLayout(self.output_size_group)
 
         self.output_size_combo = QComboBox()
-        self.output_size_combo.addItems(
-            ["Automatic", "A4", "A3", "Letter", "Legal", "Tabloid", "Custom"]
-        )
+        self.output_size_combo.addItem(self.tr("Automatic"), "automatic")
+        self.output_size_combo.addItem("A4", "a4")
+        self.output_size_combo.addItem("A3", "a3")
+        self.output_size_combo.addItem(self.tr("Letter"), "letter")
+        self.output_size_combo.addItem(self.tr("Legal"), "legal")
+        self.output_size_combo.addItem(self.tr("Tabloid"), "tabloid")
+        self.output_size_combo.addItem(self.tr("Custom"), "custom")
         output_size_layout.addWidget(self.output_size_combo, 0, 0, 1, 2)
 
         # Arranging custom size inputs vertically in the grid
-        self.custom_width_label = QLabel("Width:")
+        self.custom_width_label = QLabel(self.tr("Width:"))
         self.custom_width_input = SpinboxButtonsWidget()
         self.custom_width_input.setRange(0, 9999)
-        self.custom_height_label = QLabel("Height:")
+        self.custom_height_label = QLabel(self.tr("Height:"))
         self.custom_height_input = SpinboxButtonsWidget()
         self.custom_height_input.setRange(0, 9999)
 
@@ -176,28 +194,22 @@ class GeneralOptionsWidget(QWidget):
         Returns the selected imposition mode as a lowercase string:
         'booklet', 'calendar', or 'single'.
         """
-        text = self.imposition_type_combo.currentText().lower()
-        if "calendar" in text:
-            return "calendar"
-        elif "single" in text:
-            return "single"
-        return "booklet"  # default
+        return self.imposition_type_combo.currentData()
 
     def get_output_size(self):
         """
         Returns the selected output size.
         """
-        text = self.output_size_combo.currentText().lower()
-        if "automatic" in text:
+        value = self.output_size_combo.currentData()
+        if value == "automatic":
             return "automatic"
-        elif "custom" in text:
-            result = (
+        elif value == "custom":
+            return (
                 self.custom_width_input.value(),
                 self.custom_height_input.value(),
                 self.current_units,
             )
-            return result
-        return text
+        return value
 
     # ---------------------------
     # Internal UI logic
@@ -205,7 +217,7 @@ class GeneralOptionsWidget(QWidget):
 
     def _update_custom_ui(self):
         """Show/hide custom inputs and refresh values according to mode."""
-        is_custom = self.output_size_combo.currentText() == "Custom"
+        is_custom = self.output_size_combo.currentData() == "custom"
         self.custom_width_label.setVisible(is_custom)
         self.custom_width_input.setVisible(is_custom)
         self.custom_height_label.setVisible(is_custom)
@@ -220,9 +232,9 @@ class GeneralOptionsWidget(QWidget):
         - In Custom: show self._custom_size_mm converted into selected units.
         Does not overwrite canonical mm storage.
         """
-        text = self.output_size_combo.currentText()
+        value = self.output_size_combo.currentData()
 
-        if text == "Custom":
+        if value == "custom":
             # Convert canonical custom mm to display units
             w_mm, h_mm = self._custom_size_mm
 
@@ -299,4 +311,4 @@ class GeneralOptionsWidget(QWidget):
         Returns:
             'portrait' or 'landscape'
         """
-        return self.orientation_combo.currentText().lower()
+        return self.orientation_combo.currentData()

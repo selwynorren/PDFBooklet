@@ -9,7 +9,7 @@ A modern Linux desktop application for creating booklet impositions from PDF fil
 - Live preview with adjustable DPI
 
 ## Requirements
-- Python 3.12+
+- Python 3.10+
 - PyQt6
 - pypdf
 - PyMuPDF
@@ -20,6 +20,12 @@ See releases for pre-built executables, or install from source:
 ```bash
 pip install -r requirements.txt
 python main.py
+```
+
+## Development
+```bash
+pip install -r requirements-dev.txt   # adds pytest
+pytest                                 # run the test suite
 ```
 
 ## License

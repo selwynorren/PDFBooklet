@@ -124,7 +124,7 @@ class PreviewViewerWidget(QWidget):
     def _update_pixmap_display(self):
         """Scale and display current pixmap with overlays and selection."""
         if self._current_pixmap.isNull():
-            self.image_label.setText("Error: Could not render page.")
+            self.image_label.setText(self.tr("Error: Could not render page."))
             return
 
         self.image_label.setText("")

@@ -5,63 +5,12 @@ Handles global and per-page transformations with domain rules.
 """
 
 from typing import Dict, Optional, Set
-from dataclasses import dataclass, field
 
+# Transform is a pure data model and now lives in the data tier. Re-exported here
+# so existing `from .page_transforms import Transform` imports keep working.
+from ..data.models import Transform
 
-@dataclass
-class Transform:
-    """
-    Represents a set of transformations to apply to a page.
-    All measurements in millimeters, scales in percentages, rotation in degrees.
-    """
-
-    h_shift_mm: float = 0.0  # Horizontal shift in mm
-    v_shift_mm: float = 0.0  # Vertical shift in mm
-    scale_percent: float = 100.0  # Uniform scale percentage
-    rotation_deg: float = 0.0  # Rotation in degrees (0-360)
-    h_flip: bool = False  # Horizontal mirror
-    v_flip: bool = False  # Vertical mirror
-    h_scale_percent: float = 100.0  # Horizontal-only scale percentage
-    v_scale_percent: float = 100.0  # Vertical-only scale percentage
-
-    def is_identity(self) -> bool:
-        """Check if this transform does nothing (all default values)."""
-        return (
-            self.h_shift_mm == 0.0
-            and self.v_shift_mm == 0.0
-            and self.scale_percent == 100.0
-            and self.rotation_deg == 0.0
-            and not self.h_flip
-            and not self.v_flip
-            and self.h_scale_percent == 100.0
-            and self.v_scale_percent == 100.0
-        )
-
-    def merge_with(self, other: "Transform") -> "Transform":
-        """
-        Merge this transform with another, with 'other' taking precedence
-        for non-default values.
-
-        This allows per-page transforms to override global transforms.
-        """
-        return Transform(
-            h_shift_mm=other.h_shift_mm if other.h_shift_mm != 0.0 else self.h_shift_mm,
-            v_shift_mm=other.v_shift_mm if other.v_shift_mm != 0.0 else self.v_shift_mm,
-            scale_percent=other.scale_percent
-            if other.scale_percent != 100.0
-            else self.scale_percent,
-            rotation_deg=other.rotation_deg
-            if other.rotation_deg != 0.0
-            else self.rotation_deg,
-            h_flip=other.h_flip or self.h_flip,
-            v_flip=other.v_flip or self.v_flip,
-            h_scale_percent=other.h_scale_percent
-            if other.h_scale_percent != 100.0
-            else self.h_scale_percent,
-            v_scale_percent=other.v_scale_percent
-            if other.v_scale_percent != 100.0
-            else self.v_scale_percent,
-        )
+__all__ = ["Transform", "PageTransformManager", "create_transform_from_gui"]
 
 
 class PageTransformManager:

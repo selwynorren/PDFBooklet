@@ -370,26 +370,23 @@ class PDFSaver:
 
             transformation = transformation.translate(tx=final_x, ty=final_y)
         else:
-            # No transform - simple scale and center
+            # No transform - simple scale and center.
+            # Always center: a former scale==1.0 special case parked smaller-than-
+            # target content in the bottom-left corner instead of centering it.
             center_x = x0 + (target_width - fitted_width) / 2
             center_y = y0 + (target_height - fitted_height) / 2
 
-            # When scale is 1.0 (content fits exactly), just translate to target origin
-            if abs(base_scale - 1.0) < 0.001:
-                transformation = Transformation().translate(tx=x0, ty=y0)
-            else:
-                # Need to match the transform path logic
-                src_center_x = src_width / 2
-                src_center_y = src_height / 2
+            src_center_x = src_width / 2
+            src_center_y = src_height / 2
 
-                transformation = (
-                    Transformation()
-                    .translate(tx=-src_center_x, ty=-src_center_y)
-                    .scale(sx=base_scale, sy=base_scale)
-                    .translate(
-                        tx=center_x + fitted_width / 2, ty=center_y + fitted_height / 2
-                    )
+            transformation = (
+                Transformation()
+                .translate(tx=-src_center_x, ty=-src_center_y)
+                .scale(sx=base_scale, sy=base_scale)
+                .translate(
+                    tx=center_x + fitted_width / 2, ty=center_y + fitted_height / 2
                 )
+            )
 
         # Get transformation matrix
         ctm = transformation.ctm
@@ -409,14 +406,23 @@ class PDFSaver:
 
         ctm = tuple(cleaned_ctm)
 
-        # Create a Form XObject from the source page
-        # This encapsulates the page content and resources in an isolated object
-        form_xobject = DictionaryObject()
+        # Pull the source page's content stream; nothing to do if it's empty
+        source_content = source_page.get_contents()
+        if source_content is None:
+            return  # Nothing to merge
+
+        source_data = source_content.get_data()
+
+        # Wrap the source page in an isolated Form XObject. This encapsulates its
+        # content stream and resources so they cannot clash with the output
+        # page's own resources.
+        from pypdf.generic import StreamObject
+
+        form_xobject = StreamObject()
+        form_xobject._data = source_data
         form_xobject[NameObject("/Type")] = NameObject("/XObject")
         form_xobject[NameObject("/Subtype")] = NameObject("/Form")
         form_xobject[NameObject("/FormType")] = FloatObject(1)
-
-        # Set the BBox to match source page dimensions
         form_xobject[NameObject("/BBox")] = ArrayObject(
             [
                 FloatObject(0),
@@ -425,43 +431,6 @@ class PDFSaver:
                 FloatObject(src_height),
             ]
         )
-
-        # Copy the source page's content stream to the Form XObject
-        source_content = source_page.get_contents()
-        if source_content is None:
-            return  # Nothing to merge
-
-        source_data = source_content.get_data()
-
-        # Create a Form XObject from the source page
-        from pypdf.generic import StreamObject
-
-        # Create stream object for the Form XObject
-        form_stream = StreamObject()
-        form_stream._data = source_data
-
-        # Set Form XObject properties
-        form_stream[NameObject("/Type")] = NameObject("/XObject")
-        form_stream[NameObject("/Subtype")] = NameObject("/Form")
-        form_stream[NameObject("/FormType")] = FloatObject(1)
-
-        # Set the BBox to match source page dimensions
-        form_stream[NameObject("/BBox")] = ArrayObject(
-            [
-                FloatObject(0),
-                FloatObject(0),
-                FloatObject(src_width),
-                FloatObject(src_height),
-            ]
-        )
-
-        # Copy the source page's resources to the Form XObject
-        if "/Resources" in source_page:
-            form_stream[NameObject("/Resources")] = source_page["/Resources"]
-
-        form_xobject = form_stream
-        # Copy the source page's resources to the Form XObject
-        # This isolates resources - no conflicts with output page resources
         if "/Resources" in source_page:
             form_xobject[NameObject("/Resources")] = source_page["/Resources"]
 

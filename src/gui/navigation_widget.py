@@ -21,12 +21,12 @@ class NavigationWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(10)
 
-        self.first_button = QPushButton("<< First")
-        self.prev_button = QPushButton("< Previous")
-        self.page_label = QLabel("No PDF loaded")
+        self.first_button = QPushButton(self.tr("<< First"))
+        self.prev_button = QPushButton(self.tr("< Previous"))
+        self.page_label = QLabel(self.tr("No PDF loaded"))
         self.page_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.next_button = QPushButton("Next >")
-        self.last_button = QPushButton("Last >>")
+        self.next_button = QPushButton(self.tr("Next >"))
+        self.last_button = QPushButton(self.tr("Last >>"))
 
         for btn in [self.first_button, self.prev_button, self.next_button, self.last_button]:
             btn.setFixedHeight(28)
@@ -49,13 +49,15 @@ class NavigationWidget(QWidget):
         Updates the widget's state based on the current PDF.
         """
         if has_pdf:
-            self.page_label.setText(f"Page {current_page} of {total_pages}")
+            self.page_label.setText(
+                self.tr("Page {0} of {1}").format(current_page, total_pages)
+            )
             self.first_button.setEnabled(current_page > 1)
             self.prev_button.setEnabled(current_page > 1)
             self.next_button.setEnabled(current_page < total_pages)
             self.last_button.setEnabled(current_page < total_pages)
         else:
-            self.page_label.setText("No PDF loaded")
+            self.page_label.setText(self.tr("No PDF loaded"))
             self.first_button.setEnabled(False)
             self.prev_button.setEnabled(False)
             self.next_button.setEnabled(False)

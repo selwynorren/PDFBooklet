@@ -23,22 +23,22 @@ class GlobalOptionsWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         # --- Global Transformations Group ---
-        self.transformations_group = QGroupBox("Global Transformations")
+        self.transformations_group = QGroupBox(self.tr("Global Transformations"))
         transformations_layout = QGridLayout(self.transformations_group)
 
-        transformations_layout.addWidget(QLabel("Horizontal Shift:"), 0, 0)
+        transformations_layout.addWidget(QLabel(self.tr("Horizontal Shift:")), 0, 0)
         self.h_shift_input = SpinboxButtonsWidget()
         self.h_shift_input.setSingleStep(1)
         self.h_shift_input.setRange(-999, 999)
         transformations_layout.addWidget(self.h_shift_input, 0, 1)
 
-        transformations_layout.addWidget(QLabel("Vertical Shift:"), 1, 0)
+        transformations_layout.addWidget(QLabel(self.tr("Vertical Shift:")), 1, 0)
         self.v_shift_input = SpinboxButtonsWidget()
         self.v_shift_input.setSingleStep(1)
         self.v_shift_input.setRange(-999, 999)
         transformations_layout.addWidget(self.v_shift_input, 1, 1)
 
-        transformations_layout.addWidget(QLabel("Scale (%):"), 2, 0)
+        transformations_layout.addWidget(QLabel(self.tr("Scale (%):")), 2, 0)
         self.scale_input = SpinboxButtonsWidget()
         self.scale_input.setSuffix(" %")
         self.scale_input.setRange(0, 999)
@@ -46,22 +46,22 @@ class GlobalOptionsWidget(QWidget):
         self.scale_input.setSingleStep(1)
         transformations_layout.addWidget(self.scale_input, 2, 1)
 
-        transformations_layout.addWidget(QLabel("Rotation (°):"), 3, 0)
+        transformations_layout.addWidget(QLabel(self.tr("Rotation (°):")), 3, 0)
         self.rotation_input = SpinboxButtonsWidget()
         self.rotation_input.setSuffix(" °")
         self.rotation_input.setRange(-360, 360)
         self.rotation_input.setSingleStep(1)
         transformations_layout.addWidget(self.rotation_input, 3, 1)
 
-        transformations_layout.addWidget(QLabel("Horizontal Flip:"), 4, 0)
+        transformations_layout.addWidget(QLabel(self.tr("Horizontal Flip:")), 4, 0)
         self.h_flip_checkbox = QCheckBox()
         transformations_layout.addWidget(self.h_flip_checkbox, 4, 1)
 
-        transformations_layout.addWidget(QLabel("Vertical Flip:"), 5, 0)
+        transformations_layout.addWidget(QLabel(self.tr("Vertical Flip:")), 5, 0)
         self.v_flip_checkbox = QCheckBox()
         transformations_layout.addWidget(self.v_flip_checkbox, 5, 1)
 
-        transformations_layout.addWidget(QLabel("Scale Horizontally (%):"), 6, 0)
+        transformations_layout.addWidget(QLabel(self.tr("Scale Horizontally (%):")), 6, 0)
         self.h_scale_input = SpinboxButtonsWidget()
         self.h_scale_input.setSuffix(" %")
         self.h_scale_input.setRange(0, 999)
@@ -69,7 +69,7 @@ class GlobalOptionsWidget(QWidget):
         self.h_scale_input.setSingleStep(1)
         transformations_layout.addWidget(self.h_scale_input, 6, 1)
 
-        transformations_layout.addWidget(QLabel("Scale Vertically (%):"), 7, 0)
+        transformations_layout.addWidget(QLabel(self.tr("Scale Vertically (%):")), 7, 0)
         self.v_scale_input = SpinboxButtonsWidget()
         self.v_scale_input.setSuffix(" %")
         self.v_scale_input.setRange(0, 999)
@@ -90,7 +90,9 @@ class GlobalOptionsWidget(QWidget):
         self.v_scale_input.set_enabled_state(enabled)
 
     def update_units(self, unit: str):
-        self.transformations_group.setTitle(f"Global Transformations ({unit})")
+        self.transformations_group.setTitle(
+            self.tr("Global Transformations ({0})").format(unit)
+        )
         self.h_shift_input.update_units(unit)
         self.v_shift_input.update_units(unit)
         self.units_changed.emit(unit)
