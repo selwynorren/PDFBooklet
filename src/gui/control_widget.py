@@ -34,7 +34,7 @@ class ControlWidget(QWidget):
         main_layout.addStretch(1)
 
         # Update Preview button
-        self.update_button = QPushButton("Update Preview")
+        self.update_button = QPushButton(self.tr("Update Preview"))
         self.update_button.setFixedHeight(28)
         self.update_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         
@@ -46,7 +46,7 @@ class ControlWidget(QWidget):
         self.update_button.setAutoFillBackground(True)
 
         # Save PDF button
-        self.save_button = QPushButton("Save PDF")
+        self.save_button = QPushButton(self.tr("Save PDF"))
         self.save_button.setFixedHeight(28)
         self.save_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 

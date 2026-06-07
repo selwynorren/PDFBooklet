@@ -15,11 +15,11 @@ class PreviewEmptyWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        title_label = QLabel("PDF Booklet")
+        title_label = QLabel(self.tr("PDF Booklet"))
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setStyleSheet("font-size: 24px; font-weight: bold;")
-        
-        instructions_label = QLabel("Please select your PDF for impositioning.")
+
+        instructions_label = QLabel(self.tr("Please select your PDF for impositioning."))
         instructions_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         instructions_label.setStyleSheet("font-size: 14px; color: gray;")
         

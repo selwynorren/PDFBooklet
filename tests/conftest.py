@@ -31,6 +31,15 @@ def _make_pdf(path, page_count, width_pt=A5_W_PT, height_pt=A5_H_PT):
     doc.close()
 
 
+@pytest.fixture(scope="session")
+def qapp():
+    """A single QApplication for widget tests (offscreen)."""
+    from PyQt6.QtWidgets import QApplication
+
+    app = QApplication.instance() or QApplication([])
+    yield app
+
+
 @pytest.fixture
 def sample_pdf(tmp_path):
     """A 6-page A5 PDF. 6 pads to 8 in booklet mode (exercises blank padding)."""
