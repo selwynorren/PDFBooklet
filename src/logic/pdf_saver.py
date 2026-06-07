@@ -370,26 +370,23 @@ class PDFSaver:
 
             transformation = transformation.translate(tx=final_x, ty=final_y)
         else:
-            # No transform - simple scale and center
+            # No transform - simple scale and center.
+            # Always center: a former scale==1.0 special case parked smaller-than-
+            # target content in the bottom-left corner instead of centering it.
             center_x = x0 + (target_width - fitted_width) / 2
             center_y = y0 + (target_height - fitted_height) / 2
 
-            # When scale is 1.0 (content fits exactly), just translate to target origin
-            if abs(base_scale - 1.0) < 0.001:
-                transformation = Transformation().translate(tx=x0, ty=y0)
-            else:
-                # Need to match the transform path logic
-                src_center_x = src_width / 2
-                src_center_y = src_height / 2
+            src_center_x = src_width / 2
+            src_center_y = src_height / 2
 
-                transformation = (
-                    Transformation()
-                    .translate(tx=-src_center_x, ty=-src_center_y)
-                    .scale(sx=base_scale, sy=base_scale)
-                    .translate(
-                        tx=center_x + fitted_width / 2, ty=center_y + fitted_height / 2
-                    )
+            transformation = (
+                Transformation()
+                .translate(tx=-src_center_x, ty=-src_center_y)
+                .scale(sx=base_scale, sy=base_scale)
+                .translate(
+                    tx=center_x + fitted_width / 2, ty=center_y + fitted_height / 2
                 )
+            )
 
         # Get transformation matrix
         ctm = transformation.ctm

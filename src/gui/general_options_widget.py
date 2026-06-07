@@ -108,6 +108,15 @@ class GeneralOptionsWidget(QWidget):
 
         # --- Output Size Group ---
         self.output_size_group = QGroupBox(self.tr("Output Size"))
+        # The selected size is the FINISHED (folded) page, not the printed sheet.
+        # e.g. an A4 booklet folds two A5 pages onto an A3 sheet.
+        self.output_size_group.setToolTip(
+            self.tr(
+                "This is the size of each finished, folded page — not the sheet you "
+                "print on. A booklet folds two of these onto one sheet, so an A4 "
+                "booklet prints on A3."
+            )
+        )
         output_size_layout = QGridLayout(self.output_size_group)
 
         self.output_size_combo = QComboBox()
