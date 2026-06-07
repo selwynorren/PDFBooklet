@@ -35,7 +35,10 @@ class PDFRenderer:
 
     def close(self):
         """Close the PDF document. Call this when done rendering."""
-        if hasattr(self, "doc") and self.doc and not self.doc.is_closed:
+        # Use `is not None` (not truthiness): bool(doc) calls Document.__len__,
+        # which raises "document closed" on an already-closed doc, defeating the
+        # is_closed guard below on a second close()/__del__.
+        if getattr(self, "doc", None) is not None and not self.doc.is_closed:
             self.doc.close()
 
     def __del__(self):
