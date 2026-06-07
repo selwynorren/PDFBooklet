@@ -1,8 +1,15 @@
 # PDFBooklet/src/logic/pdf_renderer.py
 """
-Pure PDF rendering logic using PyMuPDF (fitz).
-Handles ONLY preview generation - no saving, no layout logic.
+PDF preview rendering using PyMuPDF (fitz) + Qt's raster engine.
+Handles ONLY on-screen preview generation - no saving, no layout logic.
 Supports both stateful (fast, keeps PDF open) and stateless (clean) modes.
+
+ARCHITECTURE NOTE: this module intentionally uses Qt's raster API
+(QImage/QPainter/QTransform/QPixmap). Producing pixels for the screen is a display
+job, so using the screen-drawing library here is by design - this is a documented
+exception to the "logic tier is Qt-free" guideline, in the same category as the
+QObject-based BookletWorker. The SAVE path (pdf_saver.py) is vector-first and fully
+Qt-free, and is the canonical output; preview is for display only.
 """
 
 import fitz
