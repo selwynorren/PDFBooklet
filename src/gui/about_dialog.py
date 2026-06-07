@@ -49,7 +49,7 @@ class AboutDialog(QDialog):
         # Info
         info = QLabel(
             self.tr(
-                "<h1><b>PDFBooklet</b></h1>A modern Linux desktop application<br>for creating booklet impositions from PDF files.<br><br>Developer: Selwyn Orren<br>Version: 0.1.0-preview<br><br><a href='https://github.com/selwynorren/pdfbooklet' style='color: #00afff;'>Project on GitHub</a><br><br>"
+                "<h1><b>PDFBooklet</b></h1>A modern Linux desktop application<br>for creating booklet impositions from PDF files.<br><br>Developer: Selwyn Orren<br>Version: 0.1.1-preview<br><br><a href='https://github.com/selwynorren/pdfbooklet' style='color: #00afff;'>Project on GitHub</a><br><br>"
             )
         )
         info.setAlignment(Qt.AlignmentFlag.AlignCenter)
