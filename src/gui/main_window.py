@@ -17,12 +17,13 @@ from PyQt6.QtWidgets import (
     QMessageBox,
 )
 from PyQt6.QtGui import QAction
-from PyQt6.QtCore import QSettings, QByteArray, Qt, QThread, QLocale
+from PyQt6.QtCore import Qt, QThread, QLocale
 
 # Logic imports (PyPDF-based)
 from ..logic.booklet_processor import BookletProcessor
 from ..logic.booklet_worker import BookletWorker
 from ..logic.unit_converter import mm_to_inches
+from ..data.settings_store import SettingsStore
 
 # GUI widgets
 from .about_dialog import AboutDialog
@@ -54,7 +55,7 @@ class MainWindow(QMainWindow):
         self.current_selected_side = None
 
         # Settings
-        self.settings = QSettings("PDFBooklet", "PDFBooklet")
+        self.settings = SettingsStore()
         self.load_settings()
 
         # Threads
@@ -74,13 +75,13 @@ class MainWindow(QMainWindow):
 
     # ---------------- Settings ----------------
     def load_settings(self):
-        if self.settings.contains("window/geometry"):
-            self.restoreGeometry(self.settings.value("window/geometry", QByteArray()))
+        if self.settings.has_window_geometry():
+            self.restoreGeometry(self.settings.get_window_geometry())
         else:
             self.setGeometry(100, 100, 1200, 800)
 
     def closeEvent(self, event):
-        self.settings.setValue("window/geometry", self.saveGeometry())
+        self.settings.set_window_geometry(self.saveGeometry())
         self.save_advanced_options_settings()
         event.accept()
 
@@ -555,12 +556,12 @@ class MainWindow(QMainWindow):
 
     # ---------------- PDF Open/Close ----------------
     def open_pdf_action_method(self):
-        last_dir = self.settings.value("last_dir", "")
+        last_dir = self.settings.get_last_dir()
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Open PDF", last_dir, "PDF Files (*.pdf)"
         )
         if file_path:
-            self.settings.setValue("last_dir", os.path.dirname(file_path))
+            self.settings.set_last_dir(os.path.dirname(file_path))
             self.current_pdf_path = file_path
             self.output_path = None  # <-- Reset output path here
             self.start_processing_thread()
@@ -640,7 +641,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "No PDF", "No PDF is currently open.")
             return
 
-        last_dir = self.settings.value("last_dir", "")
+        last_dir = self.settings.get_last_dir()
 
         base_name = os.path.splitext(os.path.basename(self.current_pdf_path))[0]
         suffix = self.advanced_options_widget.get_options().get("suffix", "-bklt")
@@ -653,7 +654,7 @@ class MainWindow(QMainWindow):
         )
 
         if file_path:
-            self.settings.setValue("last_dir", os.path.dirname(file_path))
+            self.settings.set_last_dir(os.path.dirname(file_path))
             self.output_path = file_path
             self._perform_save(file_path)
         else:
@@ -750,28 +751,13 @@ class MainWindow(QMainWindow):
         self.status_message_label.setText(f"Preview DPI: {self.current_preview_dpi}")
 
     def _load_advanced_options_settings(self):
-        settings_data = {
-            "units": self.settings.value("advanced_options/units", "mm", type=str),
-            "suffix": self.settings.value("advanced_options/suffix", "-bklt", type=str),
-            "creep": self.settings.value("advanced_options/creep", 0, type=int),
-            "leading_blanks": self.settings.value(
-                "advanced_options/leading_blanks", 0, type=int
-            ),
-            "trailing_blanks": self.settings.value(
-                "advanced_options/trailing_blanks", 0, type=int
-            ),
-            "locale": self.settings.value(
-                "advanced_options/locale", "System Default", type=str
-            ),
-        }
+        settings_data = self.settings.get_advanced_options()
         self.advanced_options_widget.set_options(settings_data)
         self.advanced_options_widget.units_changed.emit(settings_data["units"])
         self._apply_locale_to_all(settings_data["locale"])
 
     def save_advanced_options_settings(self):
-        options = self.advanced_options_widget.get_options()
-        for key in options:
-            self.settings.setValue(f"advanced_options/{key}", options[key])
+        self.settings.set_advanced_options(self.advanced_options_widget.get_options())
 
     def _apply_locale_to_all(self, locale_string: str):
         if locale_string == "System Default":
