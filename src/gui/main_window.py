@@ -39,7 +39,7 @@ from .advanced_options_widget import AdvancedOptionsWidget
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("PDF Booklet")
+        self.setWindowTitle(self.tr("PDF Booklet"))
 
         self._loading_transforms = False  # ADD THIS LINE
 
@@ -185,39 +185,39 @@ class MainWindow(QMainWindow):
         menu_bar = self.menuBar()
         menu_bar.setStyleSheet("QMenuBar { padding: 5px 5px 5px 6px; }")
 
-        file_menu = menu_bar.addMenu("File")
+        file_menu = menu_bar.addMenu(self.tr("File"))
 
-        self.open_pdf_action = QAction("Open PDF...", self)
+        self.open_pdf_action = QAction(self.tr("Open PDF..."), self)
         file_menu.addAction(self.open_pdf_action)
         self.open_pdf_action.triggered.connect(self.open_pdf_action_method)
 
-        self.close_pdf_action = QAction("Close PDF", self)
+        self.close_pdf_action = QAction(self.tr("Close PDF"), self)
         file_menu.addAction(self.close_pdf_action)
         self.close_pdf_action.triggered.connect(self.close_pdf_action_method)
 
         file_menu.addSeparator()
 
-        self.save_pdf_action = QAction("Save PDF", self)
+        self.save_pdf_action = QAction(self.tr("Save PDF"), self)
         file_menu.addAction(self.save_pdf_action)
         self.save_pdf_action.triggered.connect(self.save_pdf_action_method)
 
-        self.save_as_action = QAction("Save As...", self)
+        self.save_as_action = QAction(self.tr("Save As..."), self)
         file_menu.addAction(self.save_as_action)
         self.save_as_action.triggered.connect(self.save_as_action_method)
 
         file_menu.addSeparator()
 
-        self.quit_action = QAction("Quit", self)
+        self.quit_action = QAction(self.tr("Quit"), self)
         file_menu.addAction(self.quit_action)
         self.quit_action.triggered.connect(QApplication.instance().quit)
 
-        help_menu = menu_bar.addMenu("Help")
+        help_menu = menu_bar.addMenu(self.tr("Help"))
 
-        self.docs_action = QAction("Documentation", self)
+        self.docs_action = QAction(self.tr("Documentation"), self)
         help_menu.addAction(self.docs_action)
         self.docs_action.triggered.connect(self.open_documentation)
 
-        self.about_action = QAction("About", self)
+        self.about_action = QAction(self.tr("About"), self)
         help_menu.addAction(self.about_action)
         self.about_action.triggered.connect(self.show_about_dialog)
 
@@ -226,7 +226,7 @@ class MainWindow(QMainWindow):
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
 
-        self.status_message_label = QLabel("Ready.")
+        self.status_message_label = QLabel(self.tr("Ready."))
         self.status_message_label.setMinimumWidth(150)
         self.status_message_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.status_message_label.setStyleSheet("padding: 2px 2px 2px 6px;")
@@ -261,8 +261,10 @@ class MainWindow(QMainWindow):
         setattr(self, thread_attr, None)
         setattr(self, worker_attr, None)
 
-    def _reset_pdf_state(self, message: str = "Ready."):
+    def _reset_pdf_state(self, message: str = None):
         """Reset all PDF-related state and UI."""
+        if message is None:
+            message = self.tr("Ready.")
         self.current_pdf_path = None
         self._is_pdf_open = False
         self.booklet_processor = None
@@ -298,10 +300,10 @@ class MainWindow(QMainWindow):
         self.page_options_widget = PageOptionsWidget()
         self.advanced_options_widget = AdvancedOptionsWidget()
 
-        self.tab_widget.addTab(self.general_options_widget, "General")
-        self.tab_widget.addTab(self.global_options_widget, "Global Options")
-        self.tab_widget.addTab(self.page_options_widget, "Page Options")
-        self.tab_widget.addTab(self.advanced_options_widget, "Advanced")
+        self.tab_widget.addTab(self.general_options_widget, self.tr("General"))
+        self.tab_widget.addTab(self.global_options_widget, self.tr("Global Options"))
+        self.tab_widget.addTab(self.page_options_widget, self.tr("Page Options"))
+        self.tab_widget.addTab(self.advanced_options_widget, self.tr("Advanced"))
 
         left_layout.addWidget(self.tab_widget)
 
@@ -480,11 +482,11 @@ class MainWindow(QMainWindow):
     # ---------------- PDF Info ----------------
     def _update_pdf_info(self):
         if not self.current_pdf_path or not self.booklet_processor:
-            self.pdf_info_label.setText("No PDF loaded.")
+            self.pdf_info_label.setText(self.tr("No PDF loaded."))
             self.status_separator.setVisible(False)
             return
         try:
-            title = "Untitled"
+            title = self.tr("Untitled")
             with fitz.open(self.current_pdf_path) as doc:
                 meta = doc.metadata
                 if meta and meta.get("title"):
@@ -506,11 +508,13 @@ class MainWindow(QMainWindow):
                 height = height_mm
                 unit_str = "mm"
 
-            info_text = f"Title: {title} | Pages: {original_page_count} | Size: {width:.2f} x {height:.2f} {unit_str}"
+            info_text = self.tr(
+                "Title: {0} | Pages: {1} | Size: {2:.2f} x {3:.2f} {4}"
+            ).format(title, original_page_count, width, height, unit_str)
             self.pdf_info_label.setText(info_text)
             self.status_separator.setVisible(True)
         except Exception as e:
-            self.pdf_info_label.setText("Error loading PDF info.")
+            self.pdf_info_label.setText(self.tr("Error loading PDF info."))
             self.status_separator.setVisible(False)
 
     # ---------------- Menu + Control State ----------------
@@ -558,7 +562,7 @@ class MainWindow(QMainWindow):
     def open_pdf_action_method(self):
         last_dir = self.settings.get_last_dir()
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open PDF", last_dir, "PDF Files (*.pdf)"
+            self, self.tr("Open PDF"), last_dir, self.tr("PDF Files (*.pdf)")
         )
         if file_path:
             self.settings.set_last_dir(os.path.dirname(file_path))
@@ -566,15 +570,15 @@ class MainWindow(QMainWindow):
             self.output_path = None  # <-- Reset output path here
             self.start_processing_thread()
         else:
-            self.status_message_label.setText("Open cancelled.")
+            self.status_message_label.setText(self.tr("Open cancelled."))
 
     def close_pdf_action_method(self):
-        self._reset_pdf_state("Ready.")
+        self._reset_pdf_state(self.tr("Ready."))
         self.output_path = None  # <-- Reset here too
 
     # ---------------- Processing Thread ----------------
     def start_processing_thread(self):
-        self.status_message_label.setText("Processing...")
+        self.status_message_label.setText(self.tr("Processing..."))
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
         self.control_widget.setEnabled(False)
@@ -613,7 +617,9 @@ class MainWindow(QMainWindow):
     def save_pdf_action_method(self):
         """Triggered by File > Save PDF or the control widget."""
         if not self.booklet_processor or not self._is_pdf_open:
-            QMessageBox.warning(self, "No PDF", "No PDF is currently open.")
+            QMessageBox.warning(
+                self, self.tr("No PDF"), self.tr("No PDF is currently open.")
+            )
             return
 
         # If we already have an output path, check if file exists and confirm overwrite
@@ -621,13 +627,15 @@ class MainWindow(QMainWindow):
             if os.path.exists(self.output_path):
                 reply = QMessageBox.question(
                     self,
-                    "Overwrite File?",
-                    f"The file '{os.path.basename(self.output_path)}' already exists.\nDo you want to overwrite it?",
+                    self.tr("Overwrite File?"),
+                    self.tr(
+                        "The file '{0}' already exists.\nDo you want to overwrite it?"
+                    ).format(os.path.basename(self.output_path)),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No,
                 )
                 if reply != QMessageBox.StandardButton.Yes:
-                    self.status_message_label.setText("Save cancelled.")
+                    self.status_message_label.setText(self.tr("Save cancelled."))
                     return
 
             self._perform_save(self.output_path)
@@ -638,7 +646,9 @@ class MainWindow(QMainWindow):
     def save_as_action_method(self):
         """Triggered by File > Save As..."""
         if not self.current_pdf_path:
-            QMessageBox.warning(self, "No PDF", "No PDF is currently open.")
+            QMessageBox.warning(
+                self, self.tr("No PDF"), self.tr("No PDF is currently open.")
+            )
             return
 
         last_dir = self.settings.get_last_dir()
@@ -650,7 +660,7 @@ class MainWindow(QMainWindow):
         default_path = os.path.join(last_dir, suggested_name)
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save PDF As", default_path, "PDF Files (*.pdf)"
+            self, self.tr("Save PDF As"), default_path, self.tr("PDF Files (*.pdf)")
         )
 
         if file_path:
@@ -658,11 +668,11 @@ class MainWindow(QMainWindow):
             self.output_path = file_path
             self._perform_save(file_path)
         else:
-            self.status_message_label.setText("Save cancelled.")
+            self.status_message_label.setText(self.tr("Save cancelled."))
 
     def _perform_save(self, file_path: str):
         """Perform the actual save using BookletProcessor in a worker thread."""
-        self.status_message_label.setText("Saving...")
+        self.status_message_label.setText(self.tr("Saving..."))
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
         self.menuBar().setEnabled(False)
@@ -709,13 +719,17 @@ class MainWindow(QMainWindow):
         self.progress_bar.setVisible(False)
         self.menuBar().setEnabled(True)
         self.control_widget.setEnabled(True)
-        self.status_message_label.setText("Save complete.")
+        self.status_message_label.setText(self.tr("Save complete."))
 
         if self.output_path and os.path.exists(self.output_path):
             try:
                 subprocess.Popen(["xdg-open", self.output_path])  # Linux Mint
             except Exception as e:
-                QMessageBox.warning(self, "Open PDF", f"Could not open saved PDF: {e}")
+                QMessageBox.warning(
+                    self,
+                    self.tr("Open PDF"),
+                    self.tr("Could not open saved PDF: {0}").format(e),
+                )
 
     # ---------------- Advanced Settings ----------------
     def _on_units_changed(self, unit: str):
@@ -748,7 +762,9 @@ class MainWindow(QMainWindow):
                 self.current_booklet_page, self.current_preview_dpi
             )
 
-        self.status_message_label.setText(f"Preview DPI: {self.current_preview_dpi}")
+        self.status_message_label.setText(
+            self.tr("Preview DPI: {0}").format(self.current_preview_dpi)
+        )
 
     def _load_advanced_options_settings(self):
         settings_data = self.settings.get_advanced_options()
@@ -811,11 +827,15 @@ class MainWindow(QMainWindow):
                     os.startfile(docs_path)
             else:
                 QMessageBox.warning(
-                    self, "Documentation", f"User manual not found at:\n{docs_path}"
+                    self,
+                    self.tr("Documentation"),
+                    self.tr("User manual not found at:\n{0}").format(docs_path),
                 )
         except Exception as e:
             QMessageBox.warning(
-                self, "Documentation", f"Could not open user manual: {e}"
+                self,
+                self.tr("Documentation"),
+                self.tr("Could not open user manual: {0}").format(e),
             )
 
     def show_about_dialog(self):
@@ -824,21 +844,25 @@ class MainWindow(QMainWindow):
             dialog = AboutDialog(self)
             dialog.exec()
         except Exception as e:
-            QMessageBox.warning(self, "About", f"Could not open About dialog: {e}")
+            QMessageBox.warning(
+                self,
+                self.tr("About"),
+                self.tr("Could not open About dialog: {0}").format(e),
+            )
 
     # ---------------- Preview Update & Progress ----------------
     def update_preview_action_method(self):
         """Triggered when the control widget requests a preview update."""
         if not self.booklet_processor or not self._is_pdf_open:
-            self.status_message_label.setText("No PDF loaded.")
+            self.status_message_label.setText(self.tr("No PDF loaded."))
             return
 
         try:
             self._update_preview_widget()
             self._update_control_widget_state()
-            self.status_message_label.setText("Preview updated.")
+            self.status_message_label.setText(self.tr("Preview updated."))
         except Exception as e:
-            self.status_message_label.setText("Error updating preview.")
+            self.status_message_label.setText(self.tr("Error updating preview."))
 
     def update_progress_bar(self, value: int, message: str = ""):
         """Update the progress bar and status message."""
@@ -928,11 +952,11 @@ class MainWindow(QMainWindow):
         self._update_preview_widget()
         self._update_menu_state()
         self._update_control_widget_state()
-        self.status_message_label.setText("PDF loaded successfully.")
+        self.status_message_label.setText(self.tr("PDF loaded successfully."))
 
     def processing_failed_handler(self, error_message: str):
         """Called if the worker fails to process the PDF."""
-        self._reset_pdf_state(f"Processing failed: {error_message}")
+        self._reset_pdf_state(self.tr("Processing failed: {0}").format(error_message))
 
     # ---------------- Page Side Selection ----------------
     def _on_page_side_selected(self, booklet_page: int, side: str):
@@ -966,7 +990,7 @@ class MainWindow(QMainWindow):
             )
             self.page_options_widget.blockSignals(False)
             self._loading_transforms = False
-            self.status_message_label.setText("No selection")
+            self.status_message_label.setText(self.tr("No selection"))
             return
         # Page selected - load its PER-PAGE-ONLY transforms (not merged with global!)
         idx_a, idx_b = self.booklet_processor.get_original_indices_for_booklet_page(
@@ -1008,7 +1032,7 @@ class MainWindow(QMainWindow):
             self._loading_transforms = False
 
         self.status_message_label.setText(
-            f"Selected page {booklet_page + 1}, side: {side}"
+            self.tr("Selected page {0}, side: {1}").format(booklet_page + 1, side)
         )
 
     def _on_domain_changed(self):

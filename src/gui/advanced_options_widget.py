@@ -24,10 +24,11 @@ class AdvancedOptionsWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         # --- Units Group ---
-        self.units_group = QGroupBox("Units")
+        self.units_group = QGroupBox(self.tr("Units"))
         units_layout = QGridLayout(self.units_group)
 
-        units_layout.addWidget(QLabel("Dimension Units:"), 0, 0)
+        units_layout.addWidget(QLabel(self.tr("Dimension Units:")), 0, 0)
+        # Unit symbols (mm/in) are universal and used as logic keys -> not translated.
         self.units_combo = QComboBox()
         self.units_combo.addItems(["mm", "in"])
         units_layout.addWidget(self.units_combo, 0, 1)
@@ -35,11 +36,15 @@ class AdvancedOptionsWidget(QWidget):
         layout.addWidget(self.units_group)
 
         # --- Locale Group ---
-        self.locale_group = QGroupBox("Locale")
+        self.locale_group = QGroupBox(self.tr("Locale"))
         locale_layout = QGridLayout(self.locale_group)
 
-        locale_layout.addWidget(QLabel("App Locale:"), 0, 0)
+        locale_layout.addWidget(QLabel(self.tr("App Locale:")), 0, 0)
         self.locale_combo = QComboBox()
+        # NOTE: locale display names are intentionally NOT wrapped in tr(). Their text
+        # is used as a logic key (see _on_locale_changed), is persisted to settings,
+        # and is matched in main_window._apply_locale_to_all. Translating them safely
+        # needs a coordinated userData refactor across those sites; deferred.
         # Curated list of common locales
         self.locale_combo.addItems(
             [
@@ -60,17 +65,17 @@ class AdvancedOptionsWidget(QWidget):
         layout.addWidget(self.locale_group)
 
         # --- Resolution Group ---
-        self.resolution_group = QGroupBox("Resolution")
+        self.resolution_group = QGroupBox(self.tr("Resolution"))
         resolution_layout = QGridLayout(self.resolution_group)
 
-        resolution_layout.addWidget(QLabel("Preview DPI:"), 0, 0)
+        resolution_layout.addWidget(QLabel(self.tr("Preview DPI:")), 0, 0)
         self.preview_dpi_combo = QComboBox()
         self.preview_dpi_combo.addItems(["72", "96", "150", "300", "600"])
         self.preview_dpi_combo.setCurrentIndex(0)  # Always start at 72
         resolution_layout.addWidget(self.preview_dpi_combo, 0, 1)
 
         # Save DPI controls
-        self.save_dpi_label = QLabel("Downscaled Save DPI:")
+        self.save_dpi_label = QLabel(self.tr("Downscaled Save DPI:"))
         resolution_layout.addWidget(self.save_dpi_label, 1, 0)
 
         self.save_dpi_combo = QComboBox()
@@ -78,16 +83,16 @@ class AdvancedOptionsWidget(QWidget):
         self.save_dpi_combo.setCurrentIndex(1)  # Default to 300
         resolution_layout.addWidget(self.save_dpi_combo, 1, 1)
 
-        self.downscale_checkbox = QCheckBox("Downscale Images on Save")
+        self.downscale_checkbox = QCheckBox(self.tr("Downscale Images on Save"))
         resolution_layout.addWidget(self.downscale_checkbox, 2, 0, 1, 2)
 
         layout.addWidget(self.resolution_group)
 
         # --- Save Options Group ---
-        self.save_group = QGroupBox("Save Options")
+        self.save_group = QGroupBox(self.tr("Save Options"))
         save_layout = QGridLayout(self.save_group)
 
-        save_layout.addWidget(QLabel("Filename Suffix:"), 0, 0)
+        save_layout.addWidget(QLabel(self.tr("Filename Suffix:")), 0, 0)
         self.suffix_input = QLineEdit("-bklt")
         self.suffix_input.setMinimumWidth(100)
         save_layout.addWidget(self.suffix_input, 0, 1)
@@ -95,23 +100,23 @@ class AdvancedOptionsWidget(QWidget):
         layout.addWidget(self.save_group)
 
         # --- Booklet Options Group ---
-        self.booklet_options_group = QGroupBox("Booklet Options")
+        self.booklet_options_group = QGroupBox(self.tr("Booklet Options"))
         booklet_options_layout = QGridLayout(self.booklet_options_group)
 
-        booklet_options_layout.addWidget(QLabel("Creep:"), 0, 0)
+        booklet_options_layout.addWidget(QLabel(self.tr("Creep:")), 0, 0)
         self.creep_input = SpinboxButtonsWidget()
         self.creep_input.setSuffix(" mm")
         self.creep_input.setRange(0, 99)
         self.creep_input.setSingleStep(1)
         booklet_options_layout.addWidget(self.creep_input, 0, 1)
 
-        booklet_options_layout.addWidget(QLabel("Leading Blank Pages:"), 1, 0)
+        booklet_options_layout.addWidget(QLabel(self.tr("Leading Blank Pages:")), 1, 0)
         self.leading_blanks_input = SpinboxButtonsWidget()
         self.leading_blanks_input.setRange(0, 99)
         self.leading_blanks_input.setSingleStep(1)
         booklet_options_layout.addWidget(self.leading_blanks_input, 1, 1)
 
-        booklet_options_layout.addWidget(QLabel("Trailing Blank Pages:"), 2, 0)
+        booklet_options_layout.addWidget(QLabel(self.tr("Trailing Blank Pages:")), 2, 0)
         self.trailing_blanks_input = SpinboxButtonsWidget()
         self.trailing_blanks_input.setRange(0, 99)
         self.trailing_blanks_input.setSingleStep(1)
@@ -266,7 +271,7 @@ class AdvancedOptionsWidget(QWidget):
         self.creep_input.setSuffix(f" {unit}")
         self.leading_blanks_input.setSuffix(f" {unit}")
         self.trailing_blanks_input.setSuffix(f" {unit}")
-        self.booklet_options_group.setTitle(f"Booklet Options ({unit})")
+        self.booklet_options_group.setTitle(self.tr("Booklet Options ({0})").format(unit))
 
     def _update_save_dpi_state(self):
         is_checked = self.downscale_checkbox.isChecked()
