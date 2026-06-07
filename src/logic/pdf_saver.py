@@ -409,14 +409,23 @@ class PDFSaver:
 
         ctm = tuple(cleaned_ctm)
 
-        # Create a Form XObject from the source page
-        # This encapsulates the page content and resources in an isolated object
-        form_xobject = DictionaryObject()
+        # Pull the source page's content stream; nothing to do if it's empty
+        source_content = source_page.get_contents()
+        if source_content is None:
+            return  # Nothing to merge
+
+        source_data = source_content.get_data()
+
+        # Wrap the source page in an isolated Form XObject. This encapsulates its
+        # content stream and resources so they cannot clash with the output
+        # page's own resources.
+        from pypdf.generic import StreamObject
+
+        form_xobject = StreamObject()
+        form_xobject._data = source_data
         form_xobject[NameObject("/Type")] = NameObject("/XObject")
         form_xobject[NameObject("/Subtype")] = NameObject("/Form")
         form_xobject[NameObject("/FormType")] = FloatObject(1)
-
-        # Set the BBox to match source page dimensions
         form_xobject[NameObject("/BBox")] = ArrayObject(
             [
                 FloatObject(0),
@@ -425,43 +434,6 @@ class PDFSaver:
                 FloatObject(src_height),
             ]
         )
-
-        # Copy the source page's content stream to the Form XObject
-        source_content = source_page.get_contents()
-        if source_content is None:
-            return  # Nothing to merge
-
-        source_data = source_content.get_data()
-
-        # Create a Form XObject from the source page
-        from pypdf.generic import StreamObject
-
-        # Create stream object for the Form XObject
-        form_stream = StreamObject()
-        form_stream._data = source_data
-
-        # Set Form XObject properties
-        form_stream[NameObject("/Type")] = NameObject("/XObject")
-        form_stream[NameObject("/Subtype")] = NameObject("/Form")
-        form_stream[NameObject("/FormType")] = FloatObject(1)
-
-        # Set the BBox to match source page dimensions
-        form_stream[NameObject("/BBox")] = ArrayObject(
-            [
-                FloatObject(0),
-                FloatObject(0),
-                FloatObject(src_width),
-                FloatObject(src_height),
-            ]
-        )
-
-        # Copy the source page's resources to the Form XObject
-        if "/Resources" in source_page:
-            form_stream[NameObject("/Resources")] = source_page["/Resources"]
-
-        form_xobject = form_stream
-        # Copy the source page's resources to the Form XObject
-        # This isolates resources - no conflicts with output page resources
         if "/Resources" in source_page:
             form_xobject[NameObject("/Resources")] = source_page["/Resources"]
 

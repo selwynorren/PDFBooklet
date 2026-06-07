@@ -37,32 +37,6 @@ class Transform:
             and self.v_scale_percent == 100.0
         )
 
-    def merge_with(self, other: "Transform") -> "Transform":
-        """
-        Merge this transform with another, with 'other' taking precedence
-        for non-default values.
-
-        This allows per-page transforms to override global transforms.
-        """
-        return Transform(
-            h_shift_mm=other.h_shift_mm if other.h_shift_mm != 0.0 else self.h_shift_mm,
-            v_shift_mm=other.v_shift_mm if other.v_shift_mm != 0.0 else self.v_shift_mm,
-            scale_percent=other.scale_percent
-            if other.scale_percent != 100.0
-            else self.scale_percent,
-            rotation_deg=other.rotation_deg
-            if other.rotation_deg != 0.0
-            else self.rotation_deg,
-            h_flip=other.h_flip or self.h_flip,
-            v_flip=other.v_flip or self.v_flip,
-            h_scale_percent=other.h_scale_percent
-            if other.h_scale_percent != 100.0
-            else self.h_scale_percent,
-            v_scale_percent=other.v_scale_percent
-            if other.v_scale_percent != 100.0
-            else self.v_scale_percent,
-        )
-
 
 class PageTransformManager:
     """
