@@ -344,7 +344,11 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(left_widget)
         main_layout.addWidget(right_widget, 1)
 
-        left_widget.setFixedWidth(367)
+        # Width the control panel to fit the tab bar (plus headroom), with 367 as a
+        # floor. A hard-coded 367 was ~6px too narrow for the English tabs on some
+        # fonts, and would clip more once tabs are translated (longer labels).
+        tabbar_width = self.tab_widget.tabBar().sizeHint().width()
+        left_widget.setFixedWidth(max(367, tabbar_width + 16))
 
     def _on_global_transform_changed(self):
         """Apply global transformations and update preview."""
